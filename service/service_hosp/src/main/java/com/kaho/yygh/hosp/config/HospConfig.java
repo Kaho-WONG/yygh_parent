@@ -1,0 +1,14 @@
+package com.kaho.yygh.hosp.config;
+
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @description: 医院设置模块配置类
+ * @author: Kaho
+ * @create: 2023-02-14 22:37
+ **/
+@Configuration
+@MapperScan("com.kaho.yygh.hosp.mapper")
+public class HospConfig {
+}
