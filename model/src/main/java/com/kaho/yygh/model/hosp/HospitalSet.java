@@ -8,9 +8,9 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
- * <p>
- * HospitalSet 医院设置实体类
- * </p>
+ * @description: HospitalSet 医院设置实体类
+ * @author: Kaho
+ * @create: 2023-02-14 21:56
  */
 @Data
 @ApiModel(description = "医院设置")

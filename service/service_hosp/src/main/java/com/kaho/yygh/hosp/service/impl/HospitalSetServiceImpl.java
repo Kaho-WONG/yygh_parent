@@ -7,7 +7,7 @@ import com.kaho.yygh.model.hosp.HospitalSet;
 import org.springframework.stereotype.Service;
 
 /**
- * @description: HospitalSetServiceImpl 实现类
+ * @description: HospitalSetServiceImpl 医院设置 service 接口实现类
  * @author: Kaho
  * @create: 2023-02-14 22:08
  **/

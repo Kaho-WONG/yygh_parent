@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * @description: HospitalSetController 控制类，提供医院设置的相关方法
+ * @description: HospitalSetController 医院设置控制类，提供医院设置的相关方法
  * @author: Kaho
  * @create: 2023-02-14 22:16
  **/
@@ -21,7 +21,7 @@ public class HospitalSetController {
     @Autowired
     private HospitalSetService hospitalSetService;
 
-    //1.查询医院设置表所有信息，获取所有医院设置信息
+    //1.查询医院设置表(hospital_set)的所有数据，获取所有医院设置信息
     @GetMapping("findAll")
     public List<HospitalSet> findAllHospitalSet() {
         List<HospitalSet> list = hospitalSetService.list();

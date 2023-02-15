@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * @create: 2023-02-14 22:37
  **/
 @Configuration
-@MapperScan("com.kaho.yygh.hosp.mapper")
+@MapperScan("com.kaho.yygh.hosp.mapper") // mapper扫描
 public class HospConfig {
+
 }
