@@ -8,7 +8,6 @@ import com.kaho.yygh.common.util.MD5;
 import com.kaho.yygh.hosp.service.HospitalSetService;
 import com.kaho.yygh.model.hosp.HospitalSet;
 import com.kaho.yygh.vo.hosp.HospitalSetQueryVo;
-import com.sun.xml.internal.bind.v2.TODO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

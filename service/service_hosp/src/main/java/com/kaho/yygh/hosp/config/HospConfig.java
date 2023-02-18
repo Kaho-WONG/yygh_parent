@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @description: 医院设置模块配置类
+ * @description: 医院管理模块配置类
  * @author: Kaho
  * @create: 2023-02-14 22:37
  **/
