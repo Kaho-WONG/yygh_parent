@@ -11,11 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>
- * Dict
- * </p>
- *
- * @author qy
+ * @description: Dict 数据字典实体类
+ * @author: Kaho
+ * @create: 2023-02-18 14:40
  */
 @Data
 @ApiModel(description = "数据字典")
