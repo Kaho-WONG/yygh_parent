@@ -5,12 +5,10 @@ import com.alibaba.excel.metadata.BaseRowModel;
 import lombok.Data;
 
 /**
- * <p>
- * Dict
- * </p>
- *
- * @author qy
- */
+ * @description: 数据字典excel导出实体
+ * @author: Kaho
+ * @create: 2023-02-18 15:49
+ **/
 @Data
 public class DictEeVo {
 
