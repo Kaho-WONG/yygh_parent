@@ -2,6 +2,7 @@ package com.kaho.yygh.cmn.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.kaho.yygh.model.cmn.Dict;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -22,5 +23,9 @@ public interface DictService extends IService<Dict> {
      */
     void exportDictData(HttpServletResponse response);
 
-
+    /**
+     * 导入excel格式数据字典
+     * @param file
+     */
+    void importDictData(MultipartFile file);
 }
