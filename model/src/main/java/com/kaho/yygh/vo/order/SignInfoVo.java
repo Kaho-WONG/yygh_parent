@@ -11,7 +11,7 @@ import java.io.Serializable;
  * HospitalSet
  * </p>
  *
- * @author qy
+ * @author Kaho
  */
 @Data
 @ApiModel(description = "签名信息")

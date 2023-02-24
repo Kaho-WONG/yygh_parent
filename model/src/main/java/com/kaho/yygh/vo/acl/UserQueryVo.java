@@ -11,8 +11,8 @@ import java.io.Serializable;
  * 用户查询实体
  * </p>
  *
- * @author qy
- * @since 2019-11-08
+ * @author Kaho
+ * @since 2023-2-22
  */
 @Data
 @ApiModel(description = "用户查询实体")

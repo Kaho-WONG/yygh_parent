@@ -15,7 +15,7 @@ import java.util.Date;
  * RefundInfo
  * </p>
  *
- * @author qy
+ * @author Kaho
  */
 @Data
 @ApiModel(description = "RefundInfo")

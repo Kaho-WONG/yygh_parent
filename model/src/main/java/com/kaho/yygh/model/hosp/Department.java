@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * Department
  * </p>
  *
- * @author qy
+ * @author Kaho
  */
 @Data
 @ApiModel(description = "Department")

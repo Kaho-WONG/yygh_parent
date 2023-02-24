@@ -14,8 +14,8 @@ import java.util.List;
  * 权限
  * </p>
  *
- * @author qy
- * @since 2019-11-08
+ * @author Kaho
+ * @since 2023-2-22
  */
 @Data
 @ApiModel(description = "权限")
