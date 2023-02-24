@@ -9,9 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * <p>
- * Hospital
- * </p>
+ * Hospital 医院实体类
  *
  * @author Kaho
  */

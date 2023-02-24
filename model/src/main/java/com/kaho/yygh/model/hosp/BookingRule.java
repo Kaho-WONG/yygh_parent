@@ -10,9 +10,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 /**
- * <p>
- * RegisterRule
- * </p>
+ * RegisterRule 预约规则
  *
  * @author Kaho
  */

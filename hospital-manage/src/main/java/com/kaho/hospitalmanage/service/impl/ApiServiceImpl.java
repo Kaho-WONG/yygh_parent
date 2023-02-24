@@ -100,7 +100,8 @@ public class ApiServiceImpl implements ApiService {
         paramMap.put("bookingRule",bookingRule.toJSONString());
 
         paramMap.put("timestamp", HttpRequestHelper.getTimestamp());
-        paramMap.put("sign", MD5.encrypt(this.getSignKey()));
+//        paramMap.put("sign", HttpRequestHelper.getSign(paramMap, this.getSignKey()));
+        paramMap.put("sign", MD5.encrypt(this.getSignKey())); // 这里与上面原本的做区分
 
         JSONObject respone =
                 HttpRequestHelper.sendRequest(paramMap,this.getApiUrl()+"/api/hosp/saveHospital");

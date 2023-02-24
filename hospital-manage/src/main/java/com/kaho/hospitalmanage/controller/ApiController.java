@@ -66,7 +66,7 @@ public class ApiController extends BaseController {
 
 	@RequestMapping(value="/hospital/create")
 	public String createHospital(ModelMap model) {
-		return "index";
+		return "hospital/create";
 	}
 
 	@RequestMapping(value="/hospital/save",method=RequestMethod.POST)

@@ -1,6 +1,7 @@
 package com.kaho.yygh.hosp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kaho.yygh.model.hosp.Hospital;
 import com.kaho.yygh.model.hosp.HospitalSet;
 
 /**
@@ -9,5 +10,12 @@ import com.kaho.yygh.model.hosp.HospitalSet;
  * @create: 2023-02-14 22:07
  **/
 public interface HospitalSetService extends IService<HospitalSet> {
+
+    /**
+     * 获取签名key
+     * @param hoscode
+     * @return
+     */
+    String getSignKey(String hoscode);
 
 }
