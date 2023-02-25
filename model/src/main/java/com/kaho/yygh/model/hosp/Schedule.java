@@ -12,10 +12,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * <p>
- * Schedule
- * </p>
- *
+ * Schedule 医院排班信息实体类
  * @author Kaho
  */
 @Data
