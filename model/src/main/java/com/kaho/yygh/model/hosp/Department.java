@@ -8,10 +8,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * <p>
- * Department
- * </p>
- *
+ * Department 医院科室信息实体类
  * @author Kaho
  */
 @Data
