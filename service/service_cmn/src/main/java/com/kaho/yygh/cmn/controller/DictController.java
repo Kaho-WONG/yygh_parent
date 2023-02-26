@@ -49,4 +49,29 @@ public class DictController {
         return Result.ok();
     }
 
+    //------------------------下面两个接口供service_hosp医院列表远程调用----------------------------
+    // 根据dictcode(上级编码)和value(值)查询数据字典名称
+    @GetMapping("getName/{dictCode}/{value}")
+    public String getName(@PathVariable String dictCode,
+                          @PathVariable String value) {
+        String dictName = dictService.getDictName(dictCode, value);
+        return dictName;
+    }
+
+    // 根据value(值)查询数据字典名称
+    @GetMapping("getName/{value}")
+    public String getName(@PathVariable String value) {
+        String dictName = dictService.getDictName("",value);
+        return dictName;
+    }
+    //----------------------------------------------------------------------------------------
+
+    // 根据dictCode获取下级节点
+    @ApiOperation(value = "根据dictCode获取下级节点")
+    @GetMapping("findByDictCode/{dictCode}")
+    public Result findByDictCode(@PathVariable String dictCode) {
+        List<Dict> list = dictService.findByDictCode(dictCode);
+        return Result.ok(list);
+    }
+
 }

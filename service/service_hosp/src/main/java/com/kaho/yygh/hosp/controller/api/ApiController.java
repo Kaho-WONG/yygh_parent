@@ -31,7 +31,7 @@ import java.util.Map;
  * @author: Kaho
  * @create: 2023-02-24 14:39
  **/
-@Api(tags = "医院管理API接口")
+@Api(tags = "医院,科室,排班管理对外API接口")
 @RestController
 @RequestMapping("/api/hosp")
 public class ApiController {

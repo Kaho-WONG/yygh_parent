@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -96,6 +97,46 @@ public class DictServiceImpl extends ServiceImpl<DictMapper, Dict> implements Di
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // 根据dictcode(上级编码)和value(值)查询数据字典名称
+    @Override
+    public String getDictName(String dictCode, String value) {
+        // 如果dictCode为空，直接根据value查询
+        if(StringUtils.isEmpty(dictCode)) {
+            // 直接根据value查询
+            QueryWrapper<Dict> wrapper = new QueryWrapper<>();
+            wrapper.eq("value", value);
+            Dict dict = baseMapper.selectOne(wrapper);
+            return dict.getName();
+        } else { // 如果dictCode不为空，根据dictCode和value查询
+            // 根据dictcode查询dict对象，得到dict的id值
+            Dict codeDict = this.getDictByDictCode(dictCode); // 拿到上级编码对应的父类别(省/医院等级/证件类型/学历...)
+            Long parent_id = codeDict.getId(); // 取到这个类别的id，这个id就是我们下面需要查询的子数据字典项的parent_id
+            // 根据parent_id和value进行查询
+            Dict finalDict = baseMapper.selectOne(new QueryWrapper<Dict>()
+                    .eq("parent_id", parent_id)
+                    .eq("value", value));
+            return finalDict.getName();
+        }
+    }
+
+    // 根据 dictCode 找到对应的父数据字典项(省/医院等级/证件类型/学历...)
+    private Dict getDictByDictCode(String dictCode) {
+        QueryWrapper<Dict> wrapper = new QueryWrapper<>();
+        wrapper.eq("dict_code",dictCode);
+        Dict codeDict = baseMapper.selectOne(wrapper);
+        return codeDict;
+    }
+
+    // 根据dictCode获取下级节点
+    @Override
+    public List<Dict> findByDictCode(String dictCode) {
+        // 根据dictcode获取对应的父数据字典项，下面需要用到其id作为parentId查询其下级节点
+        Dict dict = this.getDictByDictCode(dictCode);
+        // 根据id获取子节点
+        List<Dict> chlidData = this.findChlidData(dict.getId());
+        return chlidData;
     }
 
 }

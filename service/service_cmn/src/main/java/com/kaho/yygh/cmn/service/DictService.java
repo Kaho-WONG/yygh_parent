@@ -17,15 +17,15 @@ public interface DictService extends IService<Dict> {
     // 根据数据id查询子数据列表
     List<Dict> findChlidData(Long id);
 
-    /**
-     * 将数据字典导出为excel
-     * @param response
-     */
+    // 将数据字典导出为excel
     void exportDictData(HttpServletResponse response);
 
-    /**
-     * 导入excel格式数据字典
-     * @param file
-     */
+    // 导入excel格式数据字典
     void importDictData(MultipartFile file);
+
+    // 根据dictcode(上级编码，可能为空)和value(值)查询
+    String getDictName(String dictCode, String value);
+
+    // 根据dictCode获取下级节点
+    List<Dict> findByDictCode(String dictCode);
 }
