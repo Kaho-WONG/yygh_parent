@@ -20,7 +20,7 @@ import java.util.List;
 @Api(tags = "数据字典接口")
 @RestController
 @RequestMapping("/admin/cmn/dict")
-@CrossOrigin // 处理跨域，等有nginx或网关后就不用这个注释了
+//@CrossOrigin // 处理跨域，等有nginx或网关后就不用这个注释了
 public class DictController {
 
     @Autowired
