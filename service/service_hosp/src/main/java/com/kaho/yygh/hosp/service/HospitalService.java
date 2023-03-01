@@ -4,6 +4,7 @@ import com.kaho.yygh.model.hosp.Hospital;
 import com.kaho.yygh.vo.hosp.HospitalQueryVo;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,6 +33,14 @@ public interface HospitalService {
     // 医院详情信息
     Map<String, Object> getHospById(String id);
 
-    //根据hoscode获取医院名称
+    // 根据hoscode获取医院名称
     String getHospName(String hoscode);
+
+
+    // 根据医院名称获取医院列表
+    List<Hospital> findByHosname(String hosname);
+
+    // 根据医院编号获取医院预约挂号详情
+    Map<String, Object> item(String hoscode);
+
 }
