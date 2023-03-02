@@ -12,6 +12,12 @@
     <artifactId>service_gateway</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.kaho</groupId>
+            <artifactId>common_util</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
         <!-- 服务网关 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
