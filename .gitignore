@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# 阿里云相关配置参数
+service/service_msm/src/main/resources/application.properties
