@@ -8,10 +8,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
- * <p>
- * UserInfo
- * </p>
- *
+ * UserInfo 用户信息实体类
  * @author Kaho
  */
 @Data
