@@ -46,18 +46,32 @@ public class UserInfoServiceImpl extends
             throw new YyghException(ResultCodeEnum.CODE_ERROR);
         }
 
-        //判断是否第一次登录：根据手机号查询数据库，如果不存在相同手机号就是第一次登录
-        QueryWrapper<UserInfo> wrapper = new QueryWrapper<>();
-        wrapper.eq("phone",phone);
-        UserInfo userInfo = baseMapper.selectOne(wrapper);
-        //如果userInfo不为null，则不执行if里面
-        if(userInfo == null) { //第一次使用这个手机号登录
-            //添加信息到数据库
-            userInfo = new UserInfo();
-            userInfo.setName("");
-            userInfo.setPhone(phone);
-            userInfo.setStatus(1);
-            baseMapper.insert(userInfo);
+        //如果是微信扫码登录，则Openid有值，则需要绑定手机号码，执行后userInfo就!=null了不会走61行的手机号登录
+        UserInfo userInfo = null;
+        if(!StringUtils.isEmpty(loginVo.getOpenid())) {
+            userInfo = this.selectWxInfoOpenId(loginVo.getOpenid());
+            if(null != userInfo) {
+                userInfo.setPhone(loginVo.getPhone()); //绑定手机号
+                this.updateById(userInfo);
+            } else {
+                throw new YyghException(ResultCodeEnum.DATA_ERROR);
+            }
+        }
+        //如果userinfo为空，证明没用微信登录过且本次也不是通过微信登录，进行正常手机登录
+        if(userInfo == null) {
+            //判断是否第一次登录：根据手机号查询数据库，如果不存在相同手机号就是第一次登录
+            QueryWrapper<UserInfo> wrapper = new QueryWrapper<>();
+            wrapper.eq("phone",phone);
+            userInfo = baseMapper.selectOne(wrapper);
+            //如果userInfo不为null，则不执行if里面
+            if(userInfo == null) { //第一次使用这个手机号登录
+                //添加信息到数据库
+                userInfo = new UserInfo();
+                userInfo.setName("");
+                userInfo.setPhone(phone);
+                userInfo.setStatus(1);
+                baseMapper.insert(userInfo);
+            }
         }
 
         //校验是否被禁用，如若用户被禁用，则直接抛出异常
@@ -85,5 +99,14 @@ public class UserInfoServiceImpl extends
         map.put("token",token);
 
         return map;
+    }
+
+    //根据openid查询数据库中是否保存了这个微信信息
+    @Override
+    public UserInfo selectWxInfoOpenId(String openid) {
+        QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("openid", openid);
+        UserInfo userInfo = baseMapper.selectOne(queryWrapper);
+        return userInfo;
     }
 }
