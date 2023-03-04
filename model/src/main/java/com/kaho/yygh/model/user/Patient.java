@@ -12,9 +12,8 @@ import java.util.Date;
 
 /**
  * <p>
- * Patient
+ * Patient 就诊人实体
  * </p>
- *
  * @author Kaho
  */
 @Data
