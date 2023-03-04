@@ -1,5 +1,8 @@
 package com.kaho.yygh.enums;
 
+/**
+ * 用户认证状态
+ */
 public enum AuthStatusEnum {
 
     NO_AUTH(0, "未认证"),
