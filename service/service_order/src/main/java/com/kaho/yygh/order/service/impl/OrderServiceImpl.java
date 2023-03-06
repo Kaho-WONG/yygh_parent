@@ -2,6 +2,8 @@ package com.kaho.yygh.order.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kaho.common.rabbit.constant.MqConst;
+import com.kaho.common.rabbit.service.RabbitService;
 import com.kaho.yygh.common.exception.YyghException;
 import com.kaho.yygh.common.helper.HttpRequestHelper;
 import com.kaho.yygh.common.result.ResultCodeEnum;
@@ -13,6 +15,8 @@ import com.kaho.yygh.order.mapper.OrderMapper;
 import com.kaho.yygh.order.service.OrderService;
 import com.kaho.yygh.user.client.PatientFeignClient;
 import com.kaho.yygh.vo.hosp.ScheduleOrderVo;
+import com.kaho.yygh.vo.msm.MsmVo;
+import com.kaho.yygh.vo.order.OrderMqVo;
 import com.kaho.yygh.vo.order.SignInfoVo;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
@@ -36,6 +40,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
 
     @Autowired
     private HospitalFeignClient hospitalFeignClient;
+
+    @Autowired
+    private RabbitService rabbitService;
 
     //保存生成挂号订单
     @Override
@@ -63,7 +70,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
         //向orderInfo设置其他数据
         String outTradeNo = System.currentTimeMillis() + "" + new Random().nextInt(100); //订单交易号
         orderInfo.setOutTradeNo(outTradeNo);
-        orderInfo.setScheduleId(scheduleId);
+        // 注意这里设置为医院自身的排班id，不要将唯一id设置进去了。同时OrderInfo类中映射字段改为 hos_schedule_id
+        orderInfo.setScheduleId(scheduleOrderVo.getHosScheduleId());
+//        orderInfo.setScheduleId(scheduleId); 错误的！！！
         orderInfo.setUserId(patient.getUserId());
         orderInfo.setPatientId(patientId);
         orderInfo.setPatientName(patient.getName());
@@ -130,12 +139,39 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
             //排班剩余可预约数
             Integer availableNumber = jsonObject.getInteger("availableNumber");
 
-            //TODO 发送mq消息，号源更新和短信通知
+            // 发送mq消息，进行号源更新和短信通知
+            //号源更新信息
+            OrderMqVo orderMqVo = new OrderMqVo();
+            orderMqVo.setScheduleId(scheduleId);
+            orderMqVo.setReservedNumber(reservedNumber);
+            orderMqVo.setAvailableNumber(availableNumber);
+            //短信提示信息
+            MsmVo msmVo = new MsmVo();
+            //这里因为我是用阿里云测试短信功能，只能绑定一个我自己的手机号，所以这里setPhone也只能用我的手机号(就诊人就手动选用户自己)
+            msmVo.setPhone(orderInfo.getPatientPhone());
+            String reserveDate = new DateTime(orderInfo.getReserveDate()).toString("yyyy-MM-dd")
+                    + (orderInfo.getReserveTime() == 0 ? "上午" : "下午");
+            Map<String,Object> param = new HashMap<String,Object>(){{
+                put("title", orderInfo.getHosname() + "|" + orderInfo.getDepname() + "|" + orderInfo.getTitle());
+                put("amount", orderInfo.getAmount());
+                put("reserveDate", reserveDate);
+                put("name", orderInfo.getPatientName());
+                put("quitTime", new DateTime(orderInfo.getQuitTime()).toString("yyyy-MM-dd HH:mm"));
+                //因为我的阿里云短信服务没有开通「自定义短信模板」，只能用短信测试的验证码短信功能，所以这里上面的几行put最后都用不上
+                //短信测试的param中只有 "code" 键会被aliyun-SDK识别，所以我这里只用code:8888来代表预约成功的短信提示
+                put("code", "8888");
+            }};
+            msmVo.setParam(param);
+            orderMqVo.setMsmVo(msmVo);
 
+            //发送信息到消息队列 —— QUEUE_ORDER : 生产订单消息到订单消息队列
+            //hosp模块的监听器HospitalReceiver(消费者)监听到该消息后会根据消息中的号源更新信息去mongodb中更新Schedule排班数据表
+            //随后HospitalReceiver会作为生产者将消息中的短信提示信息重新封装为一条消息投递到QUEUE_MSM_ITEM短信消息队列
+            //msm模块的监听器MsmReceiver(消费者)监听到短信消息队列的消息后会根据消息中的短信提示信息调用接口发送短信到用户手机号
+            rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_ORDER, MqConst.ROUTING_ORDER, orderMqVo);
         } else {
             throw new YyghException(result.getString("message"), ResultCodeEnum.FAIL.getCode());
         }
-
         return orderInfo.getId();
     }
 }

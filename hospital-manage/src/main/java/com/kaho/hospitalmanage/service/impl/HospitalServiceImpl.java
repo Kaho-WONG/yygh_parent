@@ -44,7 +44,7 @@ public class HospitalServiceImpl implements HospitalService {
         String reserveTime = (String)paramMap.get("reserveTime");
         String amount = (String)paramMap.get("amount");
 
-        Schedule schedule = this.getSchedule("1L");
+        Schedule schedule = this.getSchedule(hosScheduleId);
         if(null == schedule) {
             throw new HospitalException(ResultCodeEnum.DATA_ERROR);
         }

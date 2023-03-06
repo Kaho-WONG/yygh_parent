@@ -39,6 +39,6 @@ public interface ScheduleService {
     //根据排班id获取预约下单信息(医院科室排班医生信息、剩余预约数、费用、时间等)
     ScheduleOrderVo getScheduleOrderVo(String scheduleId);
 
-//    //更新排班数据 用于mp
-//    void update(Schedule schedule);
+    //更新排班数据 mq监听器HospitalReceiver收到消息后调用此方法去mongodb中更新排班数据
+    void update(Schedule schedule);
 }

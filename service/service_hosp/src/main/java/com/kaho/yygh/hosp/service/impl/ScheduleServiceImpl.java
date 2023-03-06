@@ -417,4 +417,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         scheduleOrderVo.setStopTime(startTime.toDate());
         return scheduleOrderVo;
     }
+
+    //更新排班信息 mq监听器HospitalReceiver收到消息后调用此方法去mongodb中更新排班数据
+    @Override
+    public void update(Schedule schedule) {
+        schedule.setUpdateTime(new Date());
+        scheduleRepository.save(schedule);
+    }
 }

@@ -28,6 +28,12 @@
             <artifactId>service_user_client</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <!--rabbitmq工具类-->
+        <dependency>
+            <groupId>com.kaho</groupId>
+            <artifactId>rabbit_util</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 
