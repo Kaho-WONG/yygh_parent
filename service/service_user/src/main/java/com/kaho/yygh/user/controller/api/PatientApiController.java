@@ -62,4 +62,12 @@ public class PatientApiController {
         patientService.removeById(id);
         return Result.ok();
     }
+
+    //根据就诊人id获取就诊人信息(用于被order模块远程调用，inner表示属于内部模块间调用的内部服务接口，不会被AuthGlobalFilter拦截)
+    @GetMapping("inner/get/{id}")
+    public Patient getPatientOrder(@PathVariable Long id){
+        Patient patient = patientService.getPatientById(id);
+        return patient;
+    }
+
 }

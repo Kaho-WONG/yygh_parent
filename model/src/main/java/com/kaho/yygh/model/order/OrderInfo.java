@@ -13,9 +13,8 @@ import java.util.Date;
 
 /**
  * <p>
- * Order
+ * Order 订单信息实体类
  * </p>
- *
  * @author Kaho
  */
 @Data

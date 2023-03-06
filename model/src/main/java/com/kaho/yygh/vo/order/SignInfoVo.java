@@ -8,9 +8,8 @@ import java.io.Serializable;
 
 /**
  * <p>
- * HospitalSet
+ * HospitalSet 医院签名信息
  * </p>
- *
  * @author Kaho
  */
 @Data
