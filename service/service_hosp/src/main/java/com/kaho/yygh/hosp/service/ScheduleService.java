@@ -33,8 +33,13 @@ public interface ScheduleService {
     //获取可预约的排班数据(指定医院指定科室下的)
     Map<String,Object> getBookingScheduleRule(int page, int limit, String hoscode, String depcode);
 
-    //根据排班id获取排班数据
+    //****************************************************************
+    //根据排班id获取排班数据 (这个scheduleId对应mongodb中的_id)
     Schedule getScheduleId(String scheduleId);
+
+    //根据排班id获取排班数据 (这个scheduleId对应mongodb中的hosScheduleId)
+    Schedule getScheduleId2(String scheduleId);
+    //****************************************************************
 
     //根据排班id获取预约下单信息(医院科室排班医生信息、剩余预约数、费用、时间等)
     ScheduleOrderVo getScheduleOrderVo(String scheduleId);

@@ -20,4 +20,7 @@ public interface ScheduleRepository extends MongoRepository<Schedule,String> {
 
     //根据医院编号 、科室编号和工作日期，查询排班详细信息
     List<Schedule> findScheduleByHoscodeAndDepcodeAndWorkDate(String hoscode, String depcode, Date toDate);
+
+    //根据HosScheduleId(医院内部自己的排班id)获取排班数据
+    Schedule getScheduleByHosScheduleId(String scheduleId);
 }

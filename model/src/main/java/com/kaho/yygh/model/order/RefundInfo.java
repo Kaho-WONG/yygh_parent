@@ -12,7 +12,7 @@ import java.util.Date;
 
 /**
  * <p>
- * RefundInfo
+ * RefundInfo 退款记录实体
  * </p>
  *
  * @author Kaho

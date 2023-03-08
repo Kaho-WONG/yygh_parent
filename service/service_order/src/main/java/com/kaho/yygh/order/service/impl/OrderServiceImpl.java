@@ -16,6 +16,7 @@ import com.kaho.yygh.model.order.OrderInfo;
 import com.kaho.yygh.model.user.Patient;
 import com.kaho.yygh.order.mapper.OrderMapper;
 import com.kaho.yygh.order.service.OrderService;
+import com.kaho.yygh.order.service.WeixinService;
 import com.kaho.yygh.user.client.PatientFeignClient;
 import com.kaho.yygh.vo.hosp.ScheduleOrderVo;
 import com.kaho.yygh.vo.msm.MsmVo;
@@ -33,7 +34,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * @description:
+ * @description: 订单服务 service 接口
  * @author: Kaho
  * @create: 2023-03-05 22:36
  **/
@@ -48,6 +49,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
 
     @Autowired
     private RabbitService rabbitService;
+
+    @Autowired
+    private WeixinService weixinService;
 
     //保存生成挂号订单
     @Override
@@ -65,7 +69,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
             throw new YyghException(ResultCodeEnum.TIME_NO);
         }
 
-        //获取签名信息
+        //获取医院签名信息
         SignInfoVo signInfoVo = hospitalFeignClient.getSignInfoVo(scheduleOrderVo.getHoscode());
 
         //添加到订单表
@@ -180,6 +184,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
         return orderInfo.getId();
     }
 
+    
     //订单列表（条件查询带分页）
     @Override
     public IPage<OrderInfo> selectPage(Page<OrderInfo> pageParam, OrderQueryVo orderQueryVo) {
@@ -237,6 +242,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
         return orderInfo;
     }
 
+    
     /**
      * 订单详情 管理平台用
      * @param orderId
@@ -251,4 +257,75 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
         map.put("patient", patient);
         return map;
     }
+
+
+    //取消预约
+    @Override
+    public Boolean cancelOrder(Long orderId) {
+        //获取订单信息
+        OrderInfo orderInfo = baseMapper.selectById(orderId);
+        //获取可退号时间，若当前时间大约可退号时间，不能取消预约
+        DateTime quitTime = new DateTime(orderInfo.getQuitTime());
+        if(quitTime.isBeforeNow()) {
+            throw new YyghException(ResultCodeEnum.CANCEL_ORDER_NO);
+        }
+
+        //调用医院方医院接口实现预约取消
+        SignInfoVo signInfoVo = hospitalFeignClient.getSignInfoVo(orderInfo.getHoscode()); //获取医院签名信息
+        if(null == signInfoVo) {
+            throw new YyghException(ResultCodeEnum.PARAM_ERROR);
+        }
+        Map<String, Object> reqMap = new HashMap<>();
+        reqMap.put("hoscode", orderInfo.getHoscode());
+        reqMap.put("hosRecordId", orderInfo.getHosRecordId());
+        reqMap.put("timestamp", HttpRequestHelper.getTimestamp());
+        String sign = HttpRequestHelper.getSign(reqMap, signInfoVo.getSignKey());
+        reqMap.put("sign", sign);
+        //调用医院开放接口，让医院方先进行yygh_manage库的order_info表中相关订单的更新
+        JSONObject result = HttpRequestHelper.sendRequest(reqMap,
+                signInfoVo.getApiUrl() + "/order/updateCancelStatus");
+        System.err.println(signInfoVo.getApiUrl() + "/order/updateCancelStatus");
+
+        //根据医院接口返回数据，进行进一步相关操作
+        if(result.getInteger("code") != 200) { //请求失败
+            throw new YyghException(result.getString("message"), ResultCodeEnum.FAIL.getCode());
+        } else {
+            //请求成功
+            //判断当前订单是否处于已支付状态，是的话要调用微信退款方法进行退款，未支付的话跳过下面直接返回true成功取消预约
+            if(orderInfo.getOrderStatus().intValue() == OrderStatusEnum.PAID.getStatus().intValue()) {
+                //调用微信退款方法
+                Boolean isRefund = weixinService.refund(orderId);
+                if(!isRefund) {
+                    //退款失败
+                    throw new YyghException(ResultCodeEnum.CANCEL_ORDER_FAIL);
+                }
+                //退款成功，需要去更新订单状态(yygh_order库order_info表的记录改为“取消预约”状态)
+                orderInfo.setOrderStatus(OrderStatusEnum.CANCLE.getStatus());
+                baseMapper.updateById(orderInfo);
+
+                //发送mq消息，更新mongodb中schedule表的预约数量，不设置可预约数与剩余预约数，接收端可预约数+1即可
+                OrderMqVo orderMqVo = new OrderMqVo();
+                orderMqVo.setScheduleId(orderInfo.getScheduleId()); //排班id
+                //短信提示
+                MsmVo msmVo = new MsmVo();
+                //这里因为我是用阿里云测试短信功能，只能绑定一个我自己的手机号，所以这里setPhone也只能用我的手机号(就诊人就手动选用户自己)
+                msmVo.setPhone(orderInfo.getPatientPhone());
+                String reserveDate = new DateTime(orderInfo.getReserveDate()).toString("yyyy-MM-dd") + (orderInfo.getReserveTime()==0 ? "上午": "下午");
+                Map<String,Object> param = new HashMap<String,Object>(){{
+                    put("title", orderInfo.getHosname()+"|"+orderInfo.getDepname()+"|"+orderInfo.getTitle());
+                    put("reserveDate", reserveDate);
+                    put("name", orderInfo.getPatientName());
+                    //因为我的阿里云短信服务没有开通「自定义短信模板」，只能用短信测试的验证码短信功能，所以这里上面的几行put最后都用不上
+                    //短信测试的param中只有 "code" 键会被aliyun-SDK识别，所以我这里只用code:5555来代表取消预约成功的短信提示
+                    put("code", "5555");
+                }};
+                msmVo.setParam(param);
+                orderMqVo.setMsmVo(msmVo);
+                rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_ORDER, MqConst.ROUTING_ORDER, orderMqVo);
+            }
+        }
+        return true;
+    }
+    
+    
 }

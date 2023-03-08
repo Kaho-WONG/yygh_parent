@@ -42,12 +42,20 @@ public class HospitalReceiver {
             key = {MqConst.ROUTING_ORDER}
     ))
     public void receiver(OrderMqVo orderMqVo, Message message, Channel channel) throws IOException {
-        //下单成功更新预约数
-        Schedule schedule = scheduleService.getScheduleId(orderMqVo.getScheduleId());
-        schedule.setReservedNumber(orderMqVo.getReservedNumber());
-        schedule.setAvailableNumber(orderMqVo.getAvailableNumber());
-        scheduleService.update(schedule); //在mongodb中更新排班信息(剩余可预约数...)
-        //发送短信
+        if(null != orderMqVo.getAvailableNumber()) {
+            //下单成功，更新预约数
+            Schedule schedule = scheduleService.getScheduleId(orderMqVo.getScheduleId()); //这里scheduleId是从前端传来的，可以用
+            schedule.setReservedNumber(orderMqVo.getReservedNumber());
+            schedule.setAvailableNumber(orderMqVo.getAvailableNumber());
+            scheduleService.update(schedule); //在mongodb中更新排班信息(剩余可预约数...)
+        } else {
+            //取消预约，更新预约数
+            Schedule schedule = scheduleService.getScheduleId2(orderMqVo.getScheduleId());
+            int availableNumber = schedule.getAvailableNumber().intValue() + 1;
+            schedule.setAvailableNumber(availableNumber);
+            scheduleService.update(schedule);
+        }
+        //发送短信(预约成功/取消预约短信，具体根据状态码区别: 8888-预约成功 5555-取消预约)
         MsmVo msmVo = orderMqVo.getMsmVo();
         if(null != msmVo) {
             //这里将消息投递到QUEUE_MSM_ITEM队列中，等待service_msm服务中的MsmReceiver监听器收到后触发发送短信操作

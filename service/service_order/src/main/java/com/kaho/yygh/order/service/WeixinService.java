@@ -14,4 +14,7 @@ public interface WeixinService {
 
     // 根据订单id去微信第三方查询支付状态
     Map<String, String> queryPayStatus(Long orderId);
+
+    // 微信退款
+    Boolean refund(Long orderId);
 }

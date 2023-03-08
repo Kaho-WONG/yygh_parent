@@ -1,10 +1,16 @@
 package com.kaho.yygh.order.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
+import com.github.wxpay.sdk.WXPayConstants;
 import com.github.wxpay.sdk.WXPayUtil;
 import com.kaho.yygh.enums.PaymentTypeEnum;
+import com.kaho.yygh.enums.RefundStatusEnum;
 import com.kaho.yygh.model.order.OrderInfo;
+import com.kaho.yygh.model.order.PaymentInfo;
+import com.kaho.yygh.model.order.RefundInfo;
 import com.kaho.yygh.order.service.OrderService;
 import com.kaho.yygh.order.service.PaymentService;
+import com.kaho.yygh.order.service.RefundInfoService;
 import com.kaho.yygh.order.service.WeixinService;
 import com.kaho.yygh.order.utils.ConstantPropertiesUtils;
 import com.kaho.yygh.order.utils.HttpClient;
@@ -12,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +39,9 @@ public class WeixinServiceImpl implements WeixinService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RefundInfoService refundInfoService;
 
     // 根据订单号下单，生成微信支付连接(二维码)
     @Override
@@ -125,6 +135,64 @@ public class WeixinServiceImpl implements WeixinService {
             //5 把接口数据返回
             return resultMap;
         } catch(Exception e) {
+            return null;
+        }
+    }
+
+    // 微信退款
+    @Override
+    public Boolean refund(Long orderId) {
+        try {
+            //根据orderId获取支付记录信息
+            PaymentInfo paymentInfo = paymentService.getPaymentInfo(orderId, PaymentTypeEnum.WEIXIN.getStatus());
+            //添加信息到退款记录表，若表中已存在相同记录，这里会将记录返回，以供我们下面这个if判断是否退款记录的状态是已退款
+            RefundInfo refundInfo = refundInfoService.saveRefundInfo(paymentInfo);
+            //判断当前订单数据是否已经退款，若退款记录状态为“已退款”，直接返回true
+            if(refundInfo.getRefundStatus().intValue() == RefundStatusEnum.REFUND.getStatus().intValue()) {
+                return true;
+            }
+
+            //还未退款，调用微信SDK接口实现退款
+            //封装必要参数
+            Map<String, String> paramMap = new HashMap<>();
+            paramMap.put("appid", ConstantPropertiesUtils.APPID);      //公众账号ID
+            paramMap.put("mch_id", ConstantPropertiesUtils.PARTNER);   //商户编号
+            paramMap.put("nonce_str", WXPayUtil.generateNonceStr());
+            paramMap.put("transaction_id", paymentInfo.getTradeNo());  //微信订单号
+            paramMap.put("out_trade_no", paymentInfo.getOutTradeNo()); //商户订单编号
+            paramMap.put("out_refund_no", "tk" + paymentInfo.getOutTradeNo()); //商户退款单号(对外业务编号)
+            //实际开发的金额应该根据订单而确定，这里写死1分钱
+//       paramMap.put("total_fee",paymentInfoQuery.getTotalAmount().multiply(new BigDecimal("100")).longValue()+"");
+//       paramMap.put("refund_fee",paymentInfoQuery.getTotalAmount().multiply(new BigDecimal("100")).longValue()+"");
+            paramMap.put("total_fee", "1");
+            paramMap.put("refund_fee", "1");
+            //调用微信支付SDK将上面map转换成xml
+            String paramXml = WXPayUtil.generateSignedXml(paramMap, ConstantPropertiesUtils.PARTNERKEY);
+
+            //设置调用退款接口内容
+            HttpClient client = new HttpClient("https://api.mch.weixin.qq.com/secapi/pay/refund");
+            client.setXmlParam(paramXml);
+            client.setHttps(true);
+            //设置证书信息
+            client.setCert(true);
+            client.setCertPassword(ConstantPropertiesUtils.PARTNER);
+            client.post(); //向微信方发起调用
+
+            //接收微信返回的数据
+            String xml = client.getContent();
+            Map<String, String> resultMap = WXPayUtil.xmlToMap(xml); //调用微信支付SDK将返回的xml转换成map
+            //如果微信返回的结果码为 SUCCESS，则退款成功，需要去修改退款记录表相关记录内容
+            if (null != resultMap && WXPayConstants.SUCCESS.equalsIgnoreCase(resultMap.get("result_code"))) {
+                refundInfo.setCallbackTime(new Date());
+                refundInfo.setTradeNo(resultMap.get("refund_id"));
+                refundInfo.setRefundStatus(RefundStatusEnum.REFUND.getStatus()); //退款记录状态改为“已退款”
+                refundInfo.setCallbackContent(JSONObject.toJSONString(resultMap));
+                refundInfoService.updateById(refundInfo); //修改退款记录表相关记录
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }

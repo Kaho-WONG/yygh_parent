@@ -361,10 +361,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         return dateTime;
     }
 
-    //根据排班id获取排班数据
+    //根据排班id获取排班数据(这个scheduleId对应mongodb中的_id)
     @Override
     public Schedule getScheduleId(String scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId).get();
+        return this.packageSchedule(schedule);
+    }
+
+    //根据排班id获取排班数据 (这个scheduleId对应mongodb中的hosScheduleId)
+    @Override
+    public Schedule getScheduleId2(String scheduleId) {
+        Schedule schedule = scheduleRepository.getScheduleByHosScheduleId(scheduleId);
         return this.packageSchedule(schedule);
     }
 
