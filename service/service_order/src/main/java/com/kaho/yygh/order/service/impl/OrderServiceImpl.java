@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -326,6 +327,33 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
         }
         return true;
     }
-    
-    
+
+    //就诊提醒  该方法实现的功能是向已支付用户发送提醒短信
+    @Override
+    public void patientTips() {
+        QueryWrapper<OrderInfo> wrapper = new QueryWrapper<>();
+        //根据当前日期，查出当天的订单记录，向这些订单的多个用户发送短信提醒
+        wrapper.eq("reserve_date", new DateTime().toString("yyyy-MM-dd")); //安排时间(查安排时间与就是今天的订单，发短信给这些就诊人)
+        wrapper.ne("order_status", OrderStatusEnum.CANCLE.getStatus()); //订单状态不能是取消状态的
+        List<OrderInfo> orderInfoList = baseMapper.selectList(wrapper);
+        for(OrderInfo orderInfo : orderInfoList) {
+            //短信提示
+            MsmVo msmVo = new MsmVo();
+            msmVo.setPhone(orderInfo.getPatientPhone());
+            String reserveDate = new DateTime(orderInfo.getReserveDate()).toString("yyyy-MM-dd")
+                    + (orderInfo.getReserveTime()==0 ? "上午" : "下午");
+            Map<String, Object> param = new HashMap<String,Object>() {{
+                put("title", orderInfo.getHosname() + "|" + orderInfo.getDepname() + "|" + orderInfo.getTitle());
+                put("reserveDate", reserveDate);
+                put("name", orderInfo.getPatientName());
+                put("jiuyitixing","就医提醒"); //为了能够走不同的短信模板多设置一个值来给后面的方法区分
+                //因为我的阿里云短信服务没有开通「自定义短信模板」，只能用短信测试的验证码短信功能，所以这里上面的几行put最后都用不上
+                //短信测试的param中只有 "code" 键会被aliyun-SDK识别，所以我这里只用code:1111来代表就诊提醒的短信提示
+                put("code", "1111");
+            }};
+            msmVo.setParam(param);
+            //短信提醒是借助前面我们写的「短信」mq队列，这里是短信生产者
+            rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_MSM, MqConst.ROUTING_MSM_ITEM, msmVo);
+        }
+    }
 }
