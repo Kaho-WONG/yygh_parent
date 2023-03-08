@@ -7,12 +7,14 @@ import com.kaho.yygh.common.utils.AuthContextHolder;
 import com.kaho.yygh.enums.OrderStatusEnum;
 import com.kaho.yygh.model.order.OrderInfo;
 import com.kaho.yygh.order.service.OrderService;
+import com.kaho.yygh.vo.order.OrderCountQueryVo;
 import com.kaho.yygh.vo.order.OrderQueryVo;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * @description: 预约挂号订单 api 调用接口
@@ -65,5 +67,12 @@ public class OrderApiController {
     public Result cancelOrder(@PathVariable Long orderId) {
         Boolean isCancel = orderService.cancelOrder(orderId);
         return Result.ok(isCancel);
+    }
+
+    //获取订单统计数据(在管理平台进行展示)
+    @ApiOperation(value = "获取订单统计数据")
+    @PostMapping("inner/getCountMap") //供内部接口调用
+    public Map<String, Object> getCountMap(@RequestBody OrderCountQueryVo orderCountQueryVo) {
+        return orderService.getCountMap(orderCountQueryVo);
     }
 }

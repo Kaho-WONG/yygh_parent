@@ -20,9 +20,7 @@ import com.kaho.yygh.order.service.WeixinService;
 import com.kaho.yygh.user.client.PatientFeignClient;
 import com.kaho.yygh.vo.hosp.ScheduleOrderVo;
 import com.kaho.yygh.vo.msm.MsmVo;
-import com.kaho.yygh.vo.order.OrderMqVo;
-import com.kaho.yygh.vo.order.OrderQueryVo;
-import com.kaho.yygh.vo.order.SignInfoVo;
+import com.kaho.yygh.vo.order.*;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * @description: 订单服务 service 接口
@@ -355,5 +354,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderInfo> implem
             //短信提醒是借助前面我们写的「短信」mq队列，这里是短信生产者
             rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_MSM, MqConst.ROUTING_MSM_ITEM, msmVo);
         }
+    }
+
+    //预约统计
+    @Override
+    public Map<String, Object> getCountMap(OrderCountQueryVo orderCountQueryVo) {
+        //调用mapper方法得到数据
+        List<OrderCountVo> orderCountVoList = baseMapper.selectOrderCount(orderCountQueryVo);
+
+        //ECharts折线图数据
+        //获取x轴需要数据，日期数据  list集合
+        List<String> dateList = orderCountVoList.stream().map(OrderCountVo::getReserveDate).collect(Collectors.toList());
+        //获取y轴需要数据，具体数量  list集合
+        List<Integer> countList =orderCountVoList.stream().map(OrderCountVo::getCount).collect(Collectors.toList());
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("dateList", dateList);
+        map.put("countList", countList);
+        return map;
     }
 }
